@@ -134,6 +134,51 @@ app.get("/api/blogs/:id", async (req, res) => {
     }
 });
 
+app.put("/api/blogs/:id", async (req, res) => {
+    try {
+        const { title, author, content } = req.body;
+
+        if (!title || !author || !content) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
+        const updatedBlog = await Blog.findByIdAndUpdate(
+            req.params.id,
+            { title, author, content },
+            { new: true }
+        );
+
+        if (!updatedBlog) {
+            return res.status(404).json({ message: "Blog not found" });
+        }
+
+        res.json({
+            message: "Blog updated successfully",
+            blog: updatedBlog
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Something went wrong. Please try again." });
+    }
+});
+
+app.delete("/api/blogs/:id", async (req, res) => {
+    try {
+        const deletedBlog = await Blog.findByIdAndDelete(req.params.id);
+
+        if (!deletedBlog) {
+            return res.status(404).json({ message: "Blog not found" });
+        }
+
+        res.json({ message: "Blog deleted successfully" });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Something went wrong. Please try again." });
+    }
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);

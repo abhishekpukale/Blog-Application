@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Blog - MyBlog</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        nav {
+            background-color: #222;
+            padding: 18px 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav h2 {
+            color: white;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+        }
+
+        .form-box {
+            max-width: 600px;
+            margin: 60px auto;
+            background-color: white;
+            padding: 35px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .form-box h1 {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+        }
+
+        textarea {
+            min-height: 180px;
+            resize: vertical;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #222;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        button:hover {
+            background-color: #444;
+        }
+
+        footer {
+            text-align: center;
+            padding: 25px;
+            background-color: #222;
+            color: white;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <h2>MyBlog</h2>
+
+        <div>
+            <a href="index.html">Home</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="create-blog.html">Create Blog</a>
+        </div>
+    </nav>
+
+    <div class="form-box">
+        <h1>Edit Blog</h1>
+
+        <form id="editForm">
+            <label>Title</label>
+            <input type="text" id="title" required>
+
+            <label>Author</label>
+            <input type="text" id="author" required>
+
+            <label>Content</label>
+            <textarea id="content" required></textarea>
+
+            <button type="submit">Save Changes</button>
+        </form>
+    </div>
+
+    <footer>
+        <p>© 2026 MyBlog. All Rights Reserved.</p>
+    </footer>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const blogId = params.get("id");
+
+        async function loadBlog() {
+            if (!blogId) {
+                alert("No blog selected.");
+                window.location.href = "dashboard.html";
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:5000/api/blogs/${blogId}`);
+
+                if (!response.ok) {
+                    throw new Error("Blog not found");
+                }
+
+                const blog = await response.json();
+
+                document.getElementById("title").value = blog.title;
+                document.getElementById("author").value = blog.author;
+                document.getElementById("content").value = blog.content;
+
+            } catch (error) {
+                alert("Unable to load this blog.");
+                console.error(error);
+                window.location.href = "dashboard.html";
+            }
+        }
+
+        document.getElementById("editForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const title = document.getElementById("title").value;
+            const author = document.getElementById("author").value;
+            const content = document.getElementById("content").value;
+
+            try {
+                const response = await fetch(`http://localhost:5000/api/blogs/${blogId}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ title, author, content })
+                });
+
+                const data = await response.json();
+
+                alert(data.message);
+
+                if (response.ok) {
+                    window.location.href = `blog-details.html?id=${blogId}`;
+                }
+
+            } catch (error) {
+                alert("Unable to connect to the backend server.");
+                console.error(error);
+            }
+        });
+
+        loadBlog();
+    </script>
+
+</body>
+</html>

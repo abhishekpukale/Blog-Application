@@ -135,6 +135,9 @@
     <script>
         const params = new URLSearchParams(window.location.search);
         const blogId = params.get("id");
+        const token = localStorage.getItem("token");
+        const userData = localStorage.getItem("user");
+        const currentUser = userData ? JSON.parse(userData) : null;
 
         async function loadBlogDetails() {
             const container = document.getElementById("blogDetails");
@@ -156,18 +159,24 @@
 
                 const blog = await response.json();
 
+                const isOwner = currentUser && blog.user === currentUser.id;
+
                 container.innerHTML = `
                     <a href="dashboard.html" class="back-link">&larr; Back to Dashboard</a>
                     <h1>${blog.title}</h1>
                     <p class="author">By: ${blog.author}</p>
                     <p class="content">${blog.content}</p>
-                    <div class="action-buttons">
-                        <a href="edit-blog.html?id=${blog._id}" class="btn edit-btn">Edit</a>
-                        <button class="btn delete-btn" id="deleteBtn">Delete</button>
-                    </div>
+                    ${isOwner ? `
+                        <div class="action-buttons">
+                            <a href="edit-blog.html?id=${blog._id}" class="btn edit-btn">Edit</a>
+                            <button class="btn delete-btn" id="deleteBtn">Delete</button>
+                        </div>
+                    ` : ""}
                 `;
 
-                document.getElementById("deleteBtn").addEventListener("click", deleteBlog);
+                if (isOwner) {
+                    document.getElementById("deleteBtn").addEventListener("click", deleteBlog);
+                }
 
             } catch (error) {
                 container.innerHTML = `
@@ -187,7 +196,10 @@
 
             try {
                 const response = await fetch(`http://localhost:5000/api/blogs/${blogId}`, {
-                    method: "DELETE"
+                    method: "DELETE",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
                 });
 
                 const data = await response.json();

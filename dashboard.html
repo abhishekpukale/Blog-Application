@@ -35,8 +35,40 @@
             margin-left: 20px;
         }
 
+        .logout-btn {
+            background: none;
+            border: 1px solid white;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 20px;
+            font-size: 14px;
+        }
+
+        .logout-btn:hover {
+            background-color: white;
+            color: #222;
+        }
+
         .dashboard {
             padding: 40px 8%;
+        }
+
+        .profile-box {
+            background-color: white;
+            padding: 20px 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .profile-box h2 {
+            margin-bottom: 5px;
+        }
+
+        .profile-box p {
+            color: #666;
         }
 
         .dashboard h1 {
@@ -109,10 +141,15 @@
             <a href="index.html">Home</a>
             <a href="dashboard.html">Dashboard</a>
             <a href="create-blog.html">Create Blog</a>
+            <button class="logout-btn" id="logoutBtn">Logout</button>
         </div>
     </nav>
 
     <section class="dashboard">
+
+        <div class="profile-box" id="profileBox">
+            <h2>Loading profile...</h2>
+        </div>
 
         <h1>My Dashboard</h1>
         <p>Manage your blogs and create new posts.</p>
@@ -130,9 +167,41 @@
     </footer>
 
     <script>
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            alert("Please log in to view your dashboard.");
+            window.location.href = "login.html";
+        }
+
+        function loadProfile() {
+            const userData = localStorage.getItem("user");
+            const profileBox = document.getElementById("profileBox");
+
+            if (userData) {
+                const user = JSON.parse(userData);
+                profileBox.innerHTML = `
+                    <h2>Welcome, ${user.name}!</h2>
+                    <p>${user.email}</p>
+                `;
+            }
+        }
+
         async function loadBlogs() {
             try {
-                const response = await fetch("http://localhost:5000/api/blogs");
+                const response = await fetch("http://localhost:5000/api/my-blogs", {
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 401) {
+                    alert("Your session expired. Please log in again.");
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("user");
+                    window.location.href = "login.html";
+                    return;
+                }
 
                 const blogs = await response.json();
 
@@ -141,7 +210,7 @@
                 blogContainer.innerHTML = "";
 
                 if (blogs.length === 0) {
-                    blogContainer.innerHTML = "<p>No blogs available.</p>";
+                    blogContainer.innerHTML = "<p>You haven't created any blogs yet.</p>";
                     return;
                 }
 
@@ -168,6 +237,13 @@
             }
         }
 
+        document.getElementById("logoutBtn").addEventListener("click", function() {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            window.location.href = "login.html";
+        });
+
+        loadProfile();
         loadBlogs();
     </script>
 

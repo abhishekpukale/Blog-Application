@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -149,6 +148,9 @@
                 alert(data.message);
 
                 if (response.ok) {
+                    localStorage.setItem("token", data.token);
+                    localStorage.setItem("user", JSON.stringify(data.user));
+
                     window.location.href = "dashboard.html";
                 }
 
@@ -161,4 +163,3 @@
 
 </body>
 </html>
-```

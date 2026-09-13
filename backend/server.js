@@ -3,9 +3,11 @@ const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const User = require("./models/User");
 const Blog = require("./models/Blog");
+const authenticate = require("./middleware/auth");
 
 const app = express();
 
@@ -73,8 +75,15 @@ app.post("/api/login", async (req, res) => {
             return res.status(401).json({ message: "Invalid email or password" });
         }
 
+        const token = jwt.sign(
+            { userId: user._id },
+            process.env.JWT_SECRET,
+            { expiresIn: "7d" }
+        );
+
         res.json({
             message: "Login successful",
+            token,
             user: {
                 id: user._id,
                 name: user.name,
@@ -88,7 +97,22 @@ app.post("/api/login", async (req, res) => {
     }
 });
 
-app.post("/api/blogs", async (req, res) => {
+app.get("/api/profile", authenticate, async (req, res) => {
+    try {
+        const user = await User.findById(req.userId).select("-password");
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.json(user);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Something went wrong. Please try again." });
+    }
+});
+
+app.post("/api/blogs", authenticate, async (req, res) => {
     try {
         const { title, author, content } = req.body;
 
@@ -96,7 +120,12 @@ app.post("/api/blogs", async (req, res) => {
             return res.status(400).json({ message: "All fields are required" });
         }
 
-        const blog = await Blog.create({ title, author, content });
+        const blog = await Blog.create({
+            title,
+            author,
+            content,
+            user: req.userId
+        });
 
         res.status(201).json({
             message: "Blog created successfully",
@@ -119,6 +148,16 @@ app.get("/api/blogs", async (req, res) => {
     }
 });
 
+app.get("/api/my-blogs", authenticate, async (req, res) => {
+    try {
+        const blogs = await Blog.find({ user: req.userId }).sort({ createdAt: -1 });
+        res.json(blogs);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Something went wrong. Please try again." });
+    }
+});
+
 app.get("/api/blogs/:id", async (req, res) => {
     try {
         const blog = await Blog.findById(req.params.id);
@@ -134,7 +173,7 @@ app.get("/api/blogs/:id", async (req, res) => {
     }
 });
 
-app.put("/api/blogs/:id", async (req, res) => {
+app.put("/api/blogs/:id", authenticate, async (req, res) => {
     try {
         const { title, author, content } = req.body;
 
@@ -142,19 +181,24 @@ app.put("/api/blogs/:id", async (req, res) => {
             return res.status(400).json({ message: "All fields are required" });
         }
 
-        const updatedBlog = await Blog.findByIdAndUpdate(
-            req.params.id,
-            { title, author, content },
-            { new: true }
-        );
+        const blog = await Blog.findById(req.params.id);
 
-        if (!updatedBlog) {
+        if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
 
+        if (blog.user.toString() !== req.userId) {
+            return res.status(403).json({ message: "You are not allowed to edit this blog" });
+        }
+
+        blog.title = title;
+        blog.author = author;
+        blog.content = content;
+        await blog.save();
+
         res.json({
             message: "Blog updated successfully",
-            blog: updatedBlog
+            blog
         });
 
     } catch (error) {
@@ -163,13 +207,19 @@ app.put("/api/blogs/:id", async (req, res) => {
     }
 });
 
-app.delete("/api/blogs/:id", async (req, res) => {
+app.delete("/api/blogs/:id", authenticate, async (req, res) => {
     try {
-        const deletedBlog = await Blog.findByIdAndDelete(req.params.id);
+        const blog = await Blog.findById(req.params.id);
 
-        if (!deletedBlog) {
+        if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
+
+        if (blog.user.toString() !== req.userId) {
+            return res.status(403).json({ message: "You are not allowed to delete this blog" });
+        }
+
+        await Blog.findByIdAndDelete(req.params.id);
 
         res.json({ message: "Blog deleted successfully" });
 

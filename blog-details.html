@@ -108,6 +108,30 @@
             color: white;
             margin-top: 40px;
         }
+
+        @media (max-width: 500px) {
+            nav {
+                flex-direction: column;
+                gap: 12px;
+                text-align: center;
+                padding: 15px 5%;
+            }
+
+            nav a {
+                margin-left: 10px;
+                margin-right: 10px;
+            }
+
+            .details-container {
+                margin: 30px auto;
+                padding: 20px;
+                width: 90%;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 
@@ -151,7 +175,7 @@
             }
 
             try {
-                const response = await fetch(`http://localhost:5000/api/blogs/${blogId}`);
+                const response = await fetch(`https://blog-application-xlw8.onrender.com/api/blogs/${blogId}`);
 
                 if (!response.ok) {
                     throw new Error("Blog not found");
@@ -195,7 +219,7 @@
             }
 
             try {
-                const response = await fetch(`http://localhost:5000/api/blogs/${blogId}`, {
+                const response = await fetch(`https://blog-application-xlw8.onrender.com/api/blogs/${blogId}`, {
                     method: "DELETE",
                     headers: {
                         "Authorization": `Bearer ${token}`

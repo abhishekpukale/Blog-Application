@@ -37,7 +37,8 @@
         }
 
         .register-box {
-            width: 350px;
+            max-width: 350px;
+            width: 90%;
             margin: 60px auto;
             background-color: white;
             padding: 30px;
@@ -87,6 +88,22 @@
             color: #222;
             font-weight: bold;
         }
+        @media (max-width: 500px) {
+    nav {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+    }
+
+    nav a {
+        margin-left: 10px;
+        margin-right: 10px;
+    }
+
+    .register-box {
+        margin: 30px auto;
+    }
+}
     </style>
 </head>
 
@@ -146,7 +163,7 @@
             }
 
             try {
-                const response = await fetch("http://localhost:5000/api/register", {
+                const response = await fetch("https://blog-application-xlw8.onrender.com/api/register", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"

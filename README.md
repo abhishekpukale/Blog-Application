@@ -4,8 +4,8 @@ A full stack blog application built from scratch as part of the Codomax Full Sta
 
 ## Live Demo
 
-- **Live Website:** [Add your deployed frontend link here]
-- **Backend API:** [Add your deployed backend link here]
+- **Live Website:** https://abhishek-myblog.netlify.app
+- **Backend API:** https://blog-application-xlw8.onrender.com
 
 ## Features
 
